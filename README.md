@@ -1,6 +1,6 @@
 # DLA-libre
 
-`DLA-libre` is a native, open-source Linux implementation of the proprietary **3M Library Systems Data Manager (DLA)** database compiler. It replaces the legacy Windows-based DLA compiler (`DataManager.exe`) by compiling tab-delimited shelf list catalogs into PalmOS database formats (.pdb/.pdX) used by the 3M DLA handheld inventory reader.
+`DLA-libre` is a native, open-source Linux implementation of the proprietary **3M(TM) Digital Data Manager** database compiler. It replaces the legacy Windows-based compiler (`DataManager.exe`) by compiling tab-delimited shelf list catalogs into PalmOS database formats (.pdb/.pdX) used by the **3M(TM) Digital Library Assistant (DLA)** handheld inventory reader.
 
 The native tool matches the original compiler outputs **100% byte-for-byte identically** (under MD5 checksumming).
 

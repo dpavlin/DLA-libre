@@ -1,12 +1,12 @@
-# 3M Library Systems DLA Client - Operations & Deployment Guide
+# 3M(TM) Digital Data Manager & Digital Library Assistant (DLA) - Operations & Deployment Guide
 
-This guide describes how to deploy, configure, and operate the original **3M Library Systems Data Manager (DLA client)** software on a new Windows environment, using the original administrative access controls and directory configurations.
+This guide describes how to deploy, configure, and operate the original **3M(TM) Digital Data Manager** software on a new Windows environment, using the original administrative access controls and directory configurations for compiling database catalogs for the **3M(TM) Digital Library Assistant (DLA)** handheld reader.
 
 ---
 
 ## 1. System Requirements & Registry Configuration
 
-Before running the DLA client (`DataManager.exe`) on a new Windows machine or clean Wine environment, you must configure the environment with validation parameters and folder structures.
+Before running the **Digital Data Manager** client (`DataManager.exe`) on a new Windows machine or clean Wine environment, you must configure the environment with validation parameters and folder structures.
 
 ### Registry Setup
 Create a `.reg` file containing the following settings to validate barcodes and bypass software checks:
