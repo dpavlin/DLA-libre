@@ -149,12 +149,12 @@ Once placed, the main interface will recognize the file and load it under **PULL
 ### Step 2: Trigger Pull List Export
 1. In the database management interface, select the pull list checkboxes you want to export (and deselect any regular shelf lists).
 2. Select **File** -> **Export...** from the menu (or press **Alt+F**, then **E**).
-3. The legacy client compiles the pull list and outputs it into the `pull/` folder at the root of the CompactFlash memory card (e.g., `pull/PL001.pdb`):
+3. The legacy client compiles the pull list and outputs it into the `pull/` folder at the root of the CompactFlash memory card (e.g., `pull/PL001.pdb`) along with the central pull list index file (`pull/PL000.tmp`):
 
 ![Export Pull Done](images/11_export_pull_done.png)
 
 ### Step 3: Load and Process on Handheld Reader
-The compiled database `pull/PL*.pdb` is copied onto the CompactFlash memory card. The handheld DLA reader automatically scans the card's `pull/` directory on boot and loads these lists.
+The compiled database `pull/PL*.pdb` and its central index `pull/PL000.tmp` are copied onto the CompactFlash memory card. The handheld DLA reader automatically reads `PL000.tmp` on boot to populate the pull list menu on the touch screen, and then loads the selected `PL*.pdb` database.
 
 During shelf reading:
 1. Select the pull list from the DLA menu.

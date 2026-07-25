@@ -53,7 +53,7 @@ python3 dla_tool.py export <input_file.tab> <output_directory>
 python3 dla_tool.py export-pull <input_file.tab> <output_file.pdb> [--description <name>]
 ```
 *   **Input format:** Tab-separated file with fields: `Barcode \t Callnumber \t Title`
-*   **Output structure:** Generates a single PalmOS database file `PL*.pdb` loaded into the `pull/` directory on the CompactFlash memory card.
+*   **Output structure:** Generates a single PalmOS database file `PL*.pdb` and automatically creates/updates the `PL000.tmp` index file inside the same directory (both must be loaded into the `pull/` directory on the CompactFlash memory card for the handheld reader to display and read them).
 
 ---
 

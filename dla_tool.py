@@ -447,6 +447,73 @@ def make_pull_metadata_block(tag: str, data: bytes, format_type: str) -> bytes:
         block += b"\x00"
     return block
 
+def update_pull_index(output_dir, pdb_basename, num_records, desc):
+    index_path = os.path.join(output_dir, "PL000.tmp")
+    entries = {}
+    
+    try:
+        list_idx = int(pdb_basename.upper().replace("PL", ""))
+    except ValueError:
+        list_idx = 1
+        
+    if os.path.exists(index_path) and os.path.getsize(index_path) >= 34:
+        try:
+            with open(index_path, "rb") as f:
+                data = f.read()
+            num_lists = struct.unpack(">H", data[2:4])[0]
+            for i in range(num_lists):
+                offset = 4 + i * 30
+                if offset + 30 <= len(data):
+                    entry_data = data[offset : offset + 30]
+                    l_idx = struct.unpack(">H", entry_data[4:6])[0]
+                    l_count = struct.unpack(">H", entry_data[6:8])[0]
+                    l_name = entry_data[10:16].split(b"\x00")[0].decode("ascii", errors="ignore")
+                    l_desc_raw = entry_data[16:30]
+                    if l_desc_raw.startswith(b"\xef\xbb\xbf"):
+                        l_desc = l_desc_raw[3:].split(b"\x00")[0].decode("utf-8", errors="ignore")
+                    else:
+                        l_desc = l_desc_raw.split(b"\x00")[0].decode("utf-8", errors="ignore")
+                    entries[l_idx] = {
+                        "count": l_count,
+                        "name": l_name,
+                        "desc": l_desc
+                    }
+        except Exception:
+            pass
+            
+    entries[list_idx] = {
+        "count": num_records,
+        "name": pdb_basename.upper()[:5],
+        "desc": desc[:10]
+    }
+    
+    num_lists = len(entries)
+    header = b"\x00\x40" + struct.pack(">H", num_lists)
+    
+    entries_data = []
+    for l_idx in sorted(entries.keys()):
+        ent = entries[l_idx]
+        name_bytes = ent["name"].encode("ascii")[:5].ljust(6, b"\x00")
+        desc_bytes = (b"\xef\xbb\xbf" + ent["desc"].encode("utf-8"))[:13].ljust(14, b"\x00")
+        
+        entry_bin = (
+            b"\x00\x00\x00\x00" +
+            struct.pack(">H", l_idx) +
+            struct.pack(">H", ent["count"]) +
+            b"\x00\x00" +
+            name_bytes +
+            desc_bytes
+        )
+        entries_data.append(entry_bin)
+        
+    payload = header + b"".join(entries_data)
+    target_len = max(64, ((len(payload) + 31) // 32) * 32)
+    payload = payload.ljust(target_len, b"\x00")
+    
+    with open(index_path, "wb") as f_out:
+        f_out.write(payload)
+    print(f"[+] Updated Pull List Index: {index_path}")
+
 def cmd_export_pull(args):
     """Compile a tab-delimited pull list file into a PalmOS PL*.pdb database."""
     print(f"[*] Compiling pull list: {args.input_file}")
@@ -571,6 +638,11 @@ def cmd_export_pull(args):
         f_out.write(pdb_data)
         
     print(f"[+] Successfully compiled Pull List to: {args.output_file}")
+    
+    # Update Pull List Index PL000.tmp
+    output_dir = os.path.dirname(os.path.abspath(args.output_file))
+    pdb_basename = os.path.splitext(os.path.basename(args.output_file))[0]
+    update_pull_index(output_dir, pdb_basename, len(records), desc)
 
 def extract_barcodes_from_pull_pdb(pdb_path):
     """Extract barcode list from a compiled PL*.pdb database."""
