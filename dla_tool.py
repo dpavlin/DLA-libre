@@ -572,6 +572,78 @@ def cmd_export_pull(args):
         
     print(f"[+] Successfully compiled Pull List to: {args.output_file}")
 
+def extract_barcodes_from_pull_pdb(pdb_path):
+    """Extract barcode list from a compiled PL*.pdb database."""
+    barcodes = []
+    with open(pdb_path, "rb") as f:
+        data = f.read()
+    
+    num_recs = struct.unpack(">H", data[76:78])[0]
+    for i in range(num_recs):
+        offset = struct.unpack(">I", data[78+i*8 : 78+i*8+4])[0]
+        next_offset = struct.unpack(">I", data[78+(i+1)*8 : 78+(i+1)*8+4])[0] if i+1 < num_recs else len(data)
+        rec_data = data[offset:next_offset]
+        
+        idx = rec_data.find(b"ID\x2a")
+        if idx != -1:
+            barcode_len = rec_data[idx+3]
+            barcode = rec_data[idx+4 : idx+4+barcode_len-1].decode("ascii", errors="ignore")
+            barcodes.append(barcode)
+    return barcodes
+
+def cmd_import_pull(args):
+    """Compare an original pull list against the returned/modified PL*.pdb from the card."""
+    print(f"[*] Analyzing Pull List results...")
+    
+    if not os.path.exists(args.original_file):
+        print(f"[-] Error: Original file not found: {args.original_file}")
+        sys.exit(1)
+        
+    if args.original_file.lower().endswith(".pdb"):
+        original_barcodes = extract_barcodes_from_pull_pdb(args.original_file)
+    else:
+        original_barcodes = []
+        with open(args.original_file, "r", encoding="utf-8-sig") as f:
+            first_line = f.readline()
+            if not first_line.startswith("barcode") and not first_line.startswith("Barcode"):
+                f.seek(0)
+            reader = csv.reader(f, delimiter="\t")
+            for row in reader:
+                if row:
+                    original_barcodes.append(row[0].strip())
+                    
+    print(f"[+] Loaded {len(original_barcodes)} original items from: {args.original_file}")
+    
+    if not os.path.exists(args.card_file):
+        print(f"[-] Error: Card file not found: {args.card_file}")
+        sys.exit(1)
+        
+    remaining_barcodes = extract_barcodes_from_pull_pdb(args.card_file)
+    print(f"[+] Loaded {len(remaining_barcodes)} remaining items from card: {args.card_file}")
+    
+    remaining_set = set(remaining_barcodes)
+    pulled = []
+    not_pulled = []
+    
+    for barcode in original_barcodes:
+        if barcode in remaining_set:
+            not_pulled.append(barcode)
+        else:
+            pulled.append(barcode)
+            
+    pulled_file = args.output_prefix + "_pulled.txt"
+    with open(pulled_file, "w", encoding="utf-8") as f_p:
+        for b in pulled:
+            f_p.write(f"{b}\n")
+            
+    not_pulled_file = args.output_prefix + "_not_pulled.txt"
+    with open(not_pulled_file, "w", encoding="utf-8") as f_np:
+        for b in not_pulled:
+            f_np.write(f"{b}\n")
+            
+    print(f"[SUCCESS] Pulled items ({len(pulled)}) written to: {pulled_file}")
+    print(f"[SUCCESS] Not Pulled items ({len(not_pulled)}) written to: {not_pulled_file}")
+
 def main():
     parser = argparse.ArgumentParser(description="DLA Database Converter and Scan Importer (Native Linux)")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -590,6 +662,11 @@ def main():
     parser_import.add_argument("input_file", help="Input upload 001.pdX file")
     parser_import.add_argument("output_file", help="Output CSV file path to write results")
     
+    parser_import_pull = subparsers.add_parser("import-pull", help="Determine Pulled/Not Pulled results by comparing original list against card PL*.pdb")
+    parser_import_pull.add_argument("original_file", help="Original pull list (.tab or .pdb)")
+    parser_import_pull.add_argument("card_file", help="Returned PL*.pdb file from card")
+    parser_import_pull.add_argument("output_prefix", help="Output path prefix to write _pulled.txt and _not_pulled.txt")
+    
     args = parser.parse_args()
     
     if args.command == "export":
@@ -598,6 +675,8 @@ def main():
         cmd_export_pull(args)
     elif args.command == "import":
         cmd_import(args)
+    elif args.command == "import-pull":
+        cmd_import_pull(args)
 
 if __name__ == "__main__":
     main()

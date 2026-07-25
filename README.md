@@ -65,5 +65,17 @@ Converts the scanned files uploaded from the handheld reader back into a standar
 
 ---
 
+### Import Pull Results (Deduce Pulled/Not Pulled items from returned card pull database)
+```bash
+python3 dla_tool.py import-pull <original_file> <card_file.pdb> <output_prefix>
+```
+*   **Original File:** The original pull list (can be the original tab-delimited text list `.tab` or the originally compiled database `.pdb`).
+*   **Card File:** The modified/returned PalmOS database `PL*.pdb` retrieved from the `pull/` folder on the card after shelf reading.
+*   **Output Files:** Automatically compares the two states and outputs:
+    *   `<output_prefix>_pulled.txt`: Barcodes of items that were successfully found and pulled from the shelf.
+    *   `<output_prefix>_not_pulled.txt`: Barcodes of items that were not found and remain on the pull list.
+
+---
+
 ## 3. Parity Verification
 For detailed byte-level parity results, MD5 checksum comparisons, and automated Wine-based regression testing, please refer to the dedicated **[Parity Verification Report](parity_verification_report.md)**.

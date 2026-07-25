@@ -174,6 +174,14 @@ The application automatically compiles two output files inside your configured *
 
 Librarians can use the **Pulled (+)** text file to batch-update hold statuses in the Koha ILS.
 
+> [!TIP]
+> **Native Alternative (`dla_tool.py`):**
+> You can perform this same diff analysis natively under Linux without running the legacy Windows application by running:
+> ```bash
+> python3 dla_tool.py import-pull original_list.tab Card/pull/PL001.pdb output_results
+> ```
+> This will generate `output_results_pulled.txt` and `output_results_not_pulled.txt` natively.
+
 ---
 
 ## 7. 3M Product Reference Manuals
