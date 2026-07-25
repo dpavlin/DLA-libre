@@ -15,14 +15,14 @@ The native tool matches the original compiler outputs **100% byte-for-byte ident
 
 ## 1. Repository Directory Structure
 
-*   **`dla_tool.py`**: The core native compiler. Supports converting text lists to PalmDB catalogs, and parsing scanned uploads back to CSV.
-*   **`build_all_floors.sh`**: Automation script that queries a Koha ILS database via SSH, downloads shelf lists for all floors (A-F), and natively compiles them.
-*   **`execute_export_a.sh`**: Isolated automation script to clear, load, and compile Floor A databases under Wine for comparative analysis.
-*   **`compare_a.py`**: Verification utility to binary-compare PalmDB output segments.
-*   **`docs/`**: Operational documentation for deploying and configuring the original legacy 3M client on a clean Windows/Wine machine.
+*   **[`dla_tool.py`](dla_tool.py)**: The core native compiler. Supports converting text lists to PalmDB catalogs, and parsing scanned uploads back to CSV.
+*   **[`build_all_floors.sh`](build_all_floors.sh)**: Automation script that queries a Koha ILS database via SSH, downloads shelf lists for all floors (A-F), and natively compiles them.
+*   **[`execute_export_a.sh`](execute_export_a.sh)**: Isolated automation script to clear, load, and compile Floor A databases under Wine for comparative analysis.
+*   **[`compare_a.py`](compare_a.py)**: Verification utility to binary-compare PalmDB output segments.
+*   **[`docs/`](docs/)**: Operational documentation for deploying and configuring the original legacy 3M client on a clean Windows/Wine machine.
     *   **[`docs/README.md`](docs/README.md)**: Operations & Setup Guide.
-    *   **`docs/images/`**: Capture logs of the original user interface.
-*   **`wine_scripts/`**: Auxiliary Windows Script Host (`ActiveXObject` / ADODB) scripts used to inspect and manipulate the Access database schema during reverse engineering.
+    *   **[`docs/images/`](docs/images/)**: Capture logs of the original user interface.
+*   **[`wine_scripts/`](wine_scripts/)**: Auxiliary Windows Script Host (`ActiveXObject` / ADODB) scripts used to inspect and manipulate the Access database schema during reverse engineering.
 
 ---
 
