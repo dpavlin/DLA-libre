@@ -18,6 +18,11 @@ The native tool matches the original compiler outputs **100% byte-for-byte ident
 *   **[`dla_tool.py`](dla_tool.py)**: The core native compiler. Supports converting text lists to PalmDB catalogs, and parsing scanned uploads back to CSV.
 *   **[`build_all_floors.sh`](build_all_floors.sh)**: Automation script that queries a Koha ILS database via SSH, downloads shelf lists for all floors (A-F), and natively compiles them.
 *   **[`execute_export_a.sh`](execute_export_a.sh)**: Isolated automation script to clear, load, and compile Floor A databases under Wine for comparative analysis.
+*   **[`execute_export_final.sh`](execute_export_final.sh)**: Main automation script executing the full GUI export flow under Wine to generate final catalog databases.
+*   **[`execute_import_wine.sh`](execute_import_wine.sh)**: Script executing the import/scan processing flow under Wine to verify legacy parsing output.
+*   **[`check_pull_wine.sh`](check_pull_wine.sh)**: Verification helper to launch the legacy client, check directory detection, and confirm the loaded status of Pull Lists.
+*   **[`execute_export_pull.sh`](execute_export_pull.sh)**: Verification helper to execute compilation of pull lists under Wine.
+*   **[`check_large_pull_wine.sh`](check_large_pull_wine.sh)**: Automated holds compiler to query, select, and compile large-scale Koha pull lists under Wine.
 *   **[`compare_a.py`](compare_a.py)**: Verification utility to binary-compare PalmDB output segments.
 *   **[`docs/`](docs/)**: Operational documentation for deploying and configuring the original legacy 3M client on a clean Windows/Wine machine.
     *   **[`docs/README.md`](docs/README.md)**: Operations & Setup Guide.
@@ -40,6 +45,17 @@ python3 dla_tool.py export <input_file.tab> <output_directory>
     *   `id01/001-3MLH.pdX` (and subsequent segments): Barcode indexes (dynamic 14 or 16-byte record layout).
     *   `md01/001d-3MLH.pdb` (and subsequent segments): Book detail strings (Title & Callnumber) with individual field-level null padding.
     *   `ndex/3F3F4431/` and `ndex/3F3F4432/`: Title and Callnumber search mapping tables.
+
+---
+
+### Export Pull List (Compile hold/pull lists to DLA card database)
+```bash
+python3 dla_tool.py export-pull <input_file.tab> <output_file.pdb> [--description <name>]
+```
+*   **Input format:** Tab-separated file with fields: `Barcode \t Callnumber \t Title`
+*   **Output structure:** Generates a single PalmOS database file `PL*.pdb` loaded into the `pull/` directory on the CompactFlash memory card.
+
+---
 
 ### Import (Extract scanned barcodes from uploaded handheld `.pdX` files)
 ```bash
