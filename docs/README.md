@@ -129,3 +129,29 @@ Ensure the upload `.pdX` files from the handheld reader are present in the `uplo
 The application parses the scanned records and validates them against the active catalog database. It updates statistics in the logging log window and exports a clean barcode text file containing the scanned barcode list to your configured **Import File Destination** (e.g. `D:\DLA\Import\Inventory\Inventory MM-DD-YY (count).txt`):
 
 ![Import Completed Successfully](images/09_import_done.png)
+
+---
+
+## 6. Compiling Pull Lists
+
+In addition to shelf order list catalogs, the system supports hold/pull lists. Pull lists are loaded onto the DLA reader device to help staff locate specific items on the shelf.
+
+### Step 1: Create a Pull List text file
+Create a tab-delimited text file (e.g. `pull1.tab`) with the format:
+`Barcode \t Callnumber \t Title`
+
+Place this file inside the configured **Pull Lists Folder** (e.g., `D:\DLA\PullList\`). 
+
+Once placed, the main interface will recognize the file and load it under **PULL LISTS** (which has a dedicated red color scheme in the user interface):
+
+![Pull Lists Loaded](images/10_pull_lists_loaded.png)
+
+### Step 2: Trigger Pull List Export
+1. In the database management interface, select the pull list checkboxes you want to export (and deselect any regular shelf lists).
+2. Select **File** -> **Export...** from the menu (or press **Alt+F**, then **E**).
+3. The legacy client compiles the pull list and outputs it into the `pull/` folder at the root of the CompactFlash memory card (e.g., `pull/PL001.pdb`):
+
+![Export Pull Done](images/11_export_pull_done.png)
+
+### Step 3: Load to Handheld Reader
+The compiled database `pull/PL*.pdb` is structured using PalmOS database records tagged with the fields `ID` (Barcode), `SO` (Shelf Order), `RE` (Relative order), `D1` (Title), and `D2` (Callnumber). The handheld reader application scans this folder and loads them directly.
