@@ -373,43 +373,55 @@ def cmd_import(args):
         sys.exit(1)
         
     with open(args.input_file, "rb") as f:
-        header = f.read(78)
-        if len(header) < 78:
-            print("[-] Error: File is too small to contain a PDB header.")
-            sys.exit(1)
-            
-        num_records, = struct.unpack(">H", header[76:78])
-        print(f"[*] PDB Header reports {num_records} records.")
+        data = f.read()
         
-        f.seek(102)
+    if len(data) < 102:
+        print("[-] Error: File is too small to contain a PDB header and initial records.")
+        sys.exit(1)
         
-        scans = []
-        while True:
-            chunk = f.read(32)
-            if len(chunk) < 32:
-                break
-                
-            seq, ts = struct.unpack(">HI", chunk[0:6])
-            barcode = chunk[6:].split(b"\x00")[0].decode("ascii", errors="ignore")
+    # Standard PDB header is 78 bytes, but we start searching records from offset 102
+    idx = 102
+    scans = []
+    
+    # PalmOS epoch to Unix epoch difference in seconds (1904-01-01 to 1970-01-01)
+    PALM_EPOCH_DIFF = 2082844800
+    
+    while idx <= len(data) - 32:
+        # Unpack sequence number (2 bytes) and timestamp (4 bytes)
+        seq, ts = struct.unpack(">HI", data[idx : idx+6])
+        barcode_bytes = data[idx+6 : idx+32].split(b"\x00")[0]
+        
+        # Heuristics for a valid scan record in Palm OS DLA format:
+        # 1. Valid PalmOS timestamp range (from year 1975 to 2075: 2.2e9 <= ts <= 5.4e9) or ts == 0
+        is_valid_ts = (2.2e9 <= ts <= 5.4e9) or (ts == 0)
+        
+        # 2. Barcode consists of printable ASCII characters and has a minimum length of 2
+        try:
+            barcode = barcode_bytes.decode("ascii")
+            is_printable = len(barcode) >= 2 and all(32 <= ord(c) < 127 for c in barcode)
+        except Exception:
+            is_printable = False
             
-            if not barcode:
-                continue
-                
+        if is_valid_ts and is_printable:
             if ts == 0:
                 ts_str = "N/A"
             else:
                 try:
-                    dt = datetime.datetime.fromtimestamp(ts, datetime.timezone.utc)
+                    unix_ts = ts - PALM_EPOCH_DIFF
+                    dt = datetime.datetime.fromtimestamp(unix_ts, datetime.timezone.utc)
                     ts_str = dt.strftime("%Y-%m-%d %H:%M:%S UTC")
                 except Exception:
                     ts_str = f"Invalid (0x{ts:08x})"
-                    
+            
             scans.append({
                 "Seq": seq,
                 "TimestampRaw": ts,
                 "Timestamp": ts_str,
                 "Barcode": barcode
             })
+            idx += 32  # Successfully parsed 32-byte scan record, advance to the next
+        else:
+            idx += 1   # Alignment shift detected, scan byte-by-byte to synchronize
             
     print(f"[+] Extracted {len(scans)} scans from upload file.")
     
