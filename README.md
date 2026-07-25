@@ -42,14 +42,5 @@ Converts the scanned files uploaded from the handheld reader back into a standar
 
 ---
 
-## 3. Parity MD5 Checksums (Floor A verification)
-
-The native output matches the original legacy compiler outputs:
-
-| File Path | MD5 Checksum (Masked Timestamps) | Result |
-| :--- | :--- | :--- |
-| `000-3MLH.pdb` | `218d350bb061070bc4e8c6a576e6c61a` | **[MATCH] 100% Byte-Identical** |
-| `id01/001-3MLH.pdX` | `ebab987df4bcab891d70cd231d99934f` | **[MATCH] 100% Byte-Identical** |
-| `md01/001d-3MLH.pdb` | `c6e9e6cf9c14c732975c38312e3e83c6` | **[MATCH] 100% Byte-Identical** |
-| `ndex/3F3F4431/000-3MLH.pdb` | `7757cce787fa83822b6d68edb7737748` | **[MATCH] 100% Byte-Identical** |
-| `ndex/3F3F4432/000-3MLH.pdb` | `720edf7e81f2bc973188455685bde160` | **[MATCH] 100% Byte-Identical** |
+## 3. Parity Verification
+For detailed byte-level parity results, MD5 checksum comparisons, and automated Wine-based regression testing, please refer to the dedicated **[Parity Verification Report](parity_verification_report.md)**.
