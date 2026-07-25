@@ -153,5 +153,41 @@ Once placed, the main interface will recognize the file and load it under **PULL
 
 ![Export Pull Done](images/11_export_pull_done.png)
 
-### Step 3: Load to Handheld Reader
-The compiled database `pull/PL*.pdb` is structured using PalmOS database records tagged with the fields `ID` (Barcode), `SO` (Shelf Order), `RE` (Relative order), `D1` (Title), and `D2` (Callnumber). The handheld reader application scans this folder and loads them directly.
+### Step 3: Load and Process on Handheld Reader
+The compiled database `pull/PL*.pdb` is copied onto the CompactFlash memory card. The handheld DLA reader automatically scans the card's `pull/` directory on boot and loads these lists.
+
+During shelf reading:
+1. Select the pull list from the DLA menu.
+2. Scan the shelves. When an item matching a barcode in the active pull list is found, the DLA emits a rapid series of high-toned beeps.
+3. The librarian removes the item from the shelf and presses the **Pulled** button on the DLA touch screen. This action **removes/deletes the record** from the `PL*.pdb` file on the card (or marks it as deleted in PalmOS metadata).
+
+### Step 4: Import Results
+Once pulling is finished, the memory card is re-inserted into the workstation PC. Inside **Digital Data Manager**, click the green **Import** icon. 
+
+Data Manager reads the modified `PL*.pdb` databases from the card and compares them against its local database record. Because the DLA deleted records of pulled items:
+*   Any item originally in the list but **missing** in the card's `PL*.pdb` is flagged as **Pulled**.
+*   Any item still **present** in the card's `PL*.pdb` is flagged as **Not Pulled**.
+
+The application automatically compiles two output files inside your configured **Import File Destination** folder:
+1.  **Pulled (+) File:** Named `<ListName> <MM-DD-YY> (+ <count>) <uniq>.plr` (contains one barcode per line of found items).
+2.  **Not Pulled (-) File:** Named `<ListName> <MM-DD-YY> (- <count>) <uniq>.plr` (contains one barcode per line of unfound items).
+
+Librarians can use the **Pulled (+)** text file to batch-update hold statuses in the Koha ILS.
+
+---
+
+## 7. 3M Product Reference Manuals
+
+The original documentation PDF manuals are located on the system at the following paths:
+
+### Workstation PC Installation Location:
+*   `C:\Program Files\3M Library Systems\Data Manager\Exe\DataFormatGuide_v3_00.pdf` (Barcode formats and list layout guidelines)
+*   `C:\Program Files\3M Library Systems\Data Manager\Exe\DataManager_Admin_v3_00.pdf` (Administrator configuration setup)
+*   `C:\Program Files\3M Library Systems\Data Manager\Exe\DataManager_Staff_v3_00.pdf` (Staff import/export operations)
+*   `C:\Program Files\3M Library Systems\DLA\Docs\DLA_User_Guide.pdf` (DLA device menu and usage)
+*   `C:\Program Files\3M Library Systems\DLA\Docs\Handheld_User_Guide.pdf` (Handheld operations reference)
+
+### Memory Card Backup Location:
+*   `Install/Docs/DLA_User_Guide.pdf` (Portable PDF manual on CompactFlash)
+*   `Install/Docs/Handheld_User_Guide.pdf`
+*   `Install/Docs/Handheld_User_Guide_702_802.pdf`
