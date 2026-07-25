@@ -79,3 +79,28 @@ To verify the scan import pipeline, we compared the parsed output of our native 
 * Our native importer successfully resolves and implements:
   * **Self-Synchronizing Stream Parsing:** Safely recovers from internal database alignment shifts caused by metadata/formatting blocks.
   * **Epoch Time Sync:** Correctly subtracts the PalmOS epoch offset (`2,082,844,800` seconds) to yield precise timestamps (legacy Windows tool does not adjust epoch and formats year 1980 scans as year 2046).
+
+---
+
+## 7. Pull List Export Parity Verification (2026-07-25)
+To verify the pull list export compilation pipeline, we compared the PalmOS database output of our native `dla_tool.py export-pull` command against the legacy **3M(TM) Digital Data Manager** application running under Wine (`execute_export_pull.sh` and `test_large_pull_wine.sh`).
+
+### Test 1: Small Pull List (2 items)
+* **Test file:** `/home/dpavlin/DLA/PullList/pull1.tab`
+* **Legacy output path:** `/home/dpavlin/DLA/Card/pull/PL001.pdb`
+* **Native output path:** `/tmp/PL001_native.pdb`
+* **Size:** Exactly **296 bytes** for both files.
+* **Parity Check:** **100% byte-for-byte binary match** (0 mismatches excluding PDB header timestamps).
+
+### Test 2: Large Koha Holds Pull List (150 items)
+* **Test file:** `/home/dpavlin/DLA/PullList/pull_koha_large.tab` (Active holds exported from Koha database via SSH)
+* **Legacy output path:** `/home/dpavlin/DLA/Card/pull/PL001.pdb`
+* **Native output path:** `/tmp/PL001_large_native.pdb`
+* **Size:** Exactly **17,106 bytes** for both files.
+* **Parity Check:** **100% identical record and offset structure**. The only differences are uninitialized RAM garbage bytes (e.g. at record padding byte locations before the `"D2"` tag) written by the legacy compiler.
+
+### Key Layout Constraints Achieved:
+* **AppInfo Offset Alignment:** Dynamically aligned to the 4-byte PalmOS boundary (calculating the padding bytes between headers and AppInfo).
+* **AppInfo Custom Layout:** Serialized the custom block structures: `"vers"` version block (containing record count), `"PLLD"` UTF-8 BOM description block (truncated to 10 characters matching database schema column limits), and `"??ID"` block.
+* **Dynamic Index List:** Inside the `"??ID"` block, we dynamically generated the 1-based record index mapping, sorted alphabetically by barcode (validated 100% identically against the legacy sorting output).
+* **Tagged Records Payload:** Packed the 5 fields `ID`, `SO`, `RE`, `D1` (title), and `D2` (callnumber) with correct field attributes, dynamic length markers, and 2-byte boundary padding.
