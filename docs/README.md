@@ -102,3 +102,25 @@ Double-click or check the checkbox next to the lists (floors) you wish to compil
     *   `id01/001-3MLH.pdX` (and subsequent segments): Barcode indexes (dynamic 14/16-byte records depending on item count).
     *   `md01/001d-3MLH.pdb` (and subsequent segments): Book details (Titles & Callnumbers).
     *   `ndex/3F3F4431/` and `ndex/3F3F4432/`: Title and Callnumber search indexes.
+
+---
+
+## 5. Importing Scans from Handheld Device
+
+To retrieve and parse scanned inventory/pull lists uploaded from the DLA handheld reader:
+
+### Step 1: Copy scan files from memory card
+Ensure the upload `.pdX` files from the handheld reader are present in the `upload/inv/` or `upload/coll/` subdirectory of your configured **Export/Import Location** (e.g. `D:\DLA\Card\upload\inv\001.pdX`).
+
+### Step 2: Trigger Import
+1. Select **File** -> **Import** from the menu (or press **Alt+F**, then **I**).
+2. The application will scan the folder and display a list confirmation dialog detailing which categories and lists are being imported:
+
+![Import Dialog](images/08_import_dialog.png)
+
+3. Press **Return** or click **OK** to start the import process.
+
+### Step 3: View Results and Reports
+The application parses the scanned records and validates them against the active catalog database. It updates statistics in the logging log window and exports a clean barcode text file containing the scanned barcode list to your configured **Import File Destination** (e.g. `D:\DLA\Import\Inventory\Inventory MM-DD-YY (count).txt`):
+
+![Import Completed Successfully](images/09_import_done.png)
