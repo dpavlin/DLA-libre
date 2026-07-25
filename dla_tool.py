@@ -433,6 +433,145 @@ def cmd_import(args):
             
     print(f"[+] Exported scans to CSV: {args.output_file}")
 
+def make_pull_metadata_block(tag: str, data: bytes, format_type: str) -> bytes:
+    tag_bytes = tag.encode("ascii")
+    if format_type == "vers":
+        header = tag_bytes + struct.pack(">H", len(data))
+    elif format_type == "PLLD":
+        header = tag_bytes + b"\x0a" + bytes([len(data)])
+    elif format_type == "??ID":
+        header = tag_bytes + b"\x09\xff" + struct.pack(">H", len(data))
+    
+    block = header + data
+    if len(block) % 2 != 0:
+        block += b"\x00"
+    return block
+
+def cmd_export_pull(args):
+    """Compile a tab-delimited pull list file into a PalmOS PL*.pdb database."""
+    print(f"[*] Compiling pull list: {args.input_file}")
+    
+    if not os.path.exists(args.input_file):
+        print(f"[-] Error: File not found: {args.input_file}")
+        sys.exit(1)
+        
+    records = []
+    with open(args.input_file, "r", encoding="utf-8-sig") as f:
+        # Check for header line
+        first_line = f.readline()
+        if not first_line.startswith("barcode") and not first_line.startswith("Barcode"):
+            # Put back the line
+            f.seek(0)
+        reader = csv.reader(f, delimiter="\t")
+        for row in reader:
+            if not row or len(row) < 3:
+                continue
+            barcode, callnumber, title = row[0].strip(), row[1].strip(), row[2].strip()
+            if barcode:
+                records.append({
+                    "barcode": barcode,
+                    "callnumber": callnumber,
+                    "title": title
+                })
+                
+    if not records:
+        print("[-] Error: No valid records found in pull list.")
+        sys.exit(1)
+        
+    print(f"[*] Found {len(records)} pull list items.")
+    
+    # Description (defaults to file basename without extension, truncated to 10 chars by schema limits)
+    desc = args.description if args.description else os.path.splitext(os.path.basename(args.input_file))[0]
+    desc = desc[:10]
+    # Build PDB Name (derived from output file basename, e.g. PL001-3MLH)
+    out_basename = os.path.splitext(os.path.basename(args.output_file))[0]
+    pdb_name = f"{out_basename.upper()[:5]}-3MLH"
+    
+    # Construct AppInfo block
+    # vers block data
+    # format: 02 03 f1 0a ??ID (4 bytes) + total_records (4 bytes)
+    vers_data = b"\x02\x03\xf1\x0a\x3f\x3f\x49\x44" + struct.pack(">I", len(records))
+    vers_block = make_pull_metadata_block("vers", vers_data, "vers")
+    
+    # PLLD block data (UTF-8 BOM + description + \x00)
+    desc_bytes = b"\xef\xbb\xbf" + desc.encode("utf-8") + b"\x00"
+    plld_block = make_pull_metadata_block("PLLD", desc_bytes, "PLLD")
+    
+    # Sort records by barcode to generate the ??ID index list
+    sorted_records_with_idx = sorted(
+        enumerate(records),
+        key=lambda x: x[1]["barcode"]
+    )
+    # 1-based indices
+    sorted_indices = [idx + 1 for idx, r in sorted_records_with_idx]
+    
+    # Construct ??ID block data (validation / segments config)
+    id_data = b"\x02\x0d" + struct.pack(">H", len(records)) + b"".join(struct.pack(">H", idx) for idx in sorted_indices)
+    id_block = make_pull_metadata_block("??ID", id_data, "??ID")
+    
+    # Assemble AppInfo: 2 bytes header (40 03) + vers + plld + id
+    app_info = b"\x40\x03" + vers_block + plld_block + id_block
+    
+    # Construct records payload
+    record_buffers = []
+    for r in records:
+        fields = []
+        # Field 1: ID (Barcode)
+        barcode_bytes = r["barcode"].encode("ascii", errors="ignore") + b"\x00"
+        fields.append((b"ID", b"\x2a", barcode_bytes))
+        
+        # Field 2: SO (Shelf Order)
+        fields.append((b"SO", b"\x0c", b"\x00\x00\x00\x00"))
+        
+        # Field 3: RE (Relative / hold type)
+        fields.append((b"RE", b"\x0c", b"\x00\x00\x00\x00"))
+        
+        # Field 4: D1 (Title)
+        title_bytes = f"title: {r['title']}".encode("utf-8", errors="ignore") + b"\x00"
+        fields.append((b"D1", b"\x2a", title_bytes))
+        
+        # Field 5: D2 (Callnumber)
+        call_bytes = f"callnumber: {r['callnumber']}".encode("utf-8", errors="ignore") + b"\x00"
+        fields.append((b"D2", b"\x2a", call_bytes))
+        
+        # Pack fields into record buffer
+        rec_buf = b"\x80\x05"  # 5 fields header
+        for tag, attr, data in fields:
+            field_entry = tag + attr + bytes([len(data)]) + data
+            if len(field_entry) % 2 != 0:
+                field_entry += b"\x00"
+            rec_buf += field_entry
+        record_buffers.append(rec_buf)
+        
+    # Build PDB Header
+    pdb_header = make_pdb_header(name=pdb_name, type_str="3MPL", creator_str="3MLH", num_records=len(records))
+    
+    # Add AppInfo offset to PDB header, aligned to 4-byte boundary
+    app_info_offset = 78 + len(records) * 8
+    padding_len = (4 - (app_info_offset % 4)) % 4
+    app_info_offset += padding_len
+    app_info_padding = b"\x00" * padding_len
+    
+    # Update AppInfoID (offset 52) in PDB header
+    pdb_header = pdb_header[:52] + struct.pack(">I", app_info_offset) + pdb_header[56:]
+    
+    # Build record offset entries
+    dir_entries = []
+    current_offset = app_info_offset + len(app_info)
+    for buf in record_buffers:
+        dir_entries.append(struct.pack(">II", current_offset, 0))
+        current_offset += len(buf)
+        
+    # Assemble full PDB binary
+    pdb_data = pdb_header + b"".join(dir_entries) + app_info_padding + app_info + b"".join(record_buffers)
+    
+    # Write to output file
+    os.makedirs(os.path.dirname(os.path.abspath(args.output_file)), exist_ok=True)
+    with open(args.output_file, "wb") as f_out:
+        f_out.write(pdb_data)
+        
+    print(f"[+] Successfully compiled Pull List to: {args.output_file}")
+
 def main():
     parser = argparse.ArgumentParser(description="DLA Database Converter and Scan Importer (Native Linux)")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -442,6 +581,11 @@ def main():
     parser_export.add_argument("output_dir", help="Output directory to write 'Database' folder to")
     parser_export.add_argument("--max-items", type=int, default=16384, help="Maximum items per segment (default: 16384)")
     
+    parser_export_pull = subparsers.add_parser("export-pull", help="Convert tab-delimited pull list into DLA card pull database (PL*.pdb)")
+    parser_export_pull.add_argument("input_file", help="Input pull list file (.tab)")
+    parser_export_pull.add_argument("output_file", help="Output pull database file path (e.g. Card/pull/PL001.pdb)")
+    parser_export_pull.add_argument("--description", help="Optional description name for the pull list (defaults to file basename)")
+    
     parser_import = subparsers.add_parser("import", help="Parse scanned barcodes and upload values from 001.pdX")
     parser_import.add_argument("input_file", help="Input upload 001.pdX file")
     parser_import.add_argument("output_file", help="Output CSV file path to write results")
@@ -450,6 +594,8 @@ def main():
     
     if args.command == "export":
         cmd_export(args)
+    elif args.command == "export-pull":
+        cmd_export_pull(args)
     elif args.command == "import":
         cmd_import(args)
 
