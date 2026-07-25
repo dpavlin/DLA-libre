@@ -28,11 +28,16 @@ Windows Registry Editor Version 5.00
 "Other Characters"=dword:00000000
 ```
 
-### Necessary Dummy Binaries
-The DLA application checks the installer path resolved in the registry for specific handheld files. If these are not present, it will throw a *"DLA Software not installed"* warning. Ensure the following dummy files exist:
-*   `C:\Program Files\3M Library Systems\DLA\dla.prc`
-*   `C:\Program Files\3M Library Systems\DLA\dla_app.prc`
-*   `C:\Program Files\3M Library Systems\DLA\FlashPro.prc`
+### Handheld Installation Binaries
+The Digital Data Manager application checks the DLA installation path resolved in the registry for the PalmOS handheld binaries that get loaded onto the DLA reader card during export. If these files are not present, it will throw a *"DLA Software not installed"* warning and block execution.
+
+These are the actual PalmOS program binaries, which are located in the following relative directory structures of the card installer folder (found on a running system or backup card layout):
+*   `Install/dla.prc`
+*   `Install/exe/dla_app.prc`
+*   `Install/FlashPro.prc`
+*   `Install/3MLS_CDI.prc`
+
+Ensure these files are copied from your card backup to the host installation path resolved in the registry (by default: `C:\Program Files\3M Library Systems\DLA\`).
 
 ---
 
