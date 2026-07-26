@@ -75,3 +75,62 @@ python3 dla_tool.py import-pull <original_file> <card_file.pdb> <output_prefix>
 
 ## 3. Parity Verification
 For detailed byte-level parity results, MD5 checksum comparisons, and automated Wine-based regression testing, please refer to the dedicated **[Parity Verification Report](parity_verification_report.md)**.
+
+---
+
+## 4. 3M DLA PDB Record Format Analysis
+
+### Pull List Records (3MPL Type)
+
+Pull list `.pdb` files use a 5-field tagged record format:
+
+| Field | Attribute | Type | Description |
+|-------|-----------|------|-------------|
+| **ID** | `0x2a` | variable-length ASCII | Barcode (Item ID) |
+| **SO** | `0x0c` | 4-byte big-endian uint32 | Shelf Order number |
+| **RE** | `0x0c` | 4-byte big-endian uint32 | Relative/Hold type |
+| **D1** | `0x2a` | variable-length ASCII | Primary Info (display text) |
+| **D2** | `0x2a` | variable-length ASCII | Secondary Info (display text) |
+
+### SO and RE Fields
+
+**Current status:** All analyzed pull list PDB files show `SO=0x00000000` and `RE=0x00000000` for every record.
+
+**Evidence:**
+- Wine-generated `PL001.pdb` (150 records, 3M Data Manager v3.00): SO=0, RE=0
+- E2 test export `PL001.pdb` (165 records): SO=0, RE=0
+- Historic inventura data (2018): No pull list `.pdb` files found
+
+**Research performed:**
+- Searched 3M Data Format Guide v3.00 (3788 lines): No SO/RE documentation
+- Searched DLA User Guide (7308 lines): No SO/RE field definitions
+- Searched Handheld User Guide (1234 lines): No SO/RE field definitions
+- Examined Wine database tables (Format, ImpPullFormats, UploadFormat): No SO/RE parameters
+
+**Possible explanations:**
+1. SO/RE are populated by the 3M Conversion Station (not Data Manager export)
+2. SO/RE are reserved for future 3M device features
+3. SO/RE are used internally by the DLA during shelf-order checking (not exported)
+4. SO/RE contain circulation status data (hold type, security status, etc.)
+
+### 🔴 ACTION REQUIRED: Device Verification
+
+**The SO and RE field values must be verified using an actual 3M DLA device:**
+
+1. **Export a pull list from Data Manager** and load it onto a CompactFlash card
+2. **Load the card into the DLA device** and run the "Pull Items" function
+3. **Pull a few items** and save the results to the card
+4. **Import the results back into Data Manager** and examine the saved `.pdb` file
+5. **Check if SO/RE fields changed** after the device read/interacted with the list
+
+**Alternative verification methods:**
+- Use a 3M DLA device to scan a shelf-order list and check if SO values are populated in the device's internal records
+- Check if the DLA's "Check Shelf Order" function uses SO values for ordering comparison
+- Examine pull-list results `.pdb` files saved by the device after a pull session
+
+**Impact on native compiler:**
+- If SO/RE are simply placeholders: Current implementation (SO=0, RE=0) is correct ✅
+- If SO contains shelf order positions: Need to populate from barcode index `.pdX` shelf_idx
+- If RE contains circulation/hold status: Need to determine encoding from device data
+
+For analysis scripts, see [`dla_pdb.py`](dla_pdb.py) and [`wine_scripts/examine_so_re.py`](wine_scripts/examine_so_re.py).
