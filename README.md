@@ -92,6 +92,19 @@ Pull list `.pdb` files use a 5-field tagged record format:
 | **D1** | `0x2a` | variable-length ASCII | Primary Info (display text) |
 | **D2** | `0x2a` | variable-length ASCII | Secondary Info (display text) |
 
+### Device Scan Records (3MLL Type)
+
+The RFID reader collects data during inventory scans. The upload files (`upload/inv/001.pdX`) contain:
+
+| Field | Size | Description |
+|-------|------|-------------|
+| **SequenceNumber** | 2 bytes | Scan sequence counter |
+| **Timestamp** | 4 bytes | PalmOS epoch timestamp |
+| **Barcode** | 26 bytes | Item barcode (ASCII, null-padded) |
+| **Total** | 32 bytes | Per record |
+
+The library's `cmd_import` function successfully parses these files from historic inventura data (2018), extracting all scanned barcodes with timestamps.
+
 ### SO and RE Fields
 
 **Current status:** All analyzed pull list PDB files show `SO=0x00000000` and `RE=0x00000000` for every record.
@@ -100,12 +113,16 @@ Pull list `.pdb` files use a 5-field tagged record format:
 - Wine-generated `PL001.pdb` (150 records, 3M Data Manager v3.00): SO=0, RE=0
 - E2 test export `PL001.pdb` (165 records): SO=0, RE=0
 - Historic inventura data (2018): No pull list `.pdb` files found
+- Device upload files: SO/RE not collected during scan
 
 **Research performed:**
 - Searched 3M Data Format Guide v3.00 (3788 lines): No SO/RE documentation
 - Searched DLA User Guide (7308 lines): No SO/RE field definitions
 - Searched Handheld User Guide (1234 lines): No SO/RE field definitions
 - Examined Wine database tables (Format, ImpPullFormats, UploadFormat): No SO/RE parameters
+- Parsed 100+ historic inventura upload files from 2018 using library's `cmd_import`
+
+**Key finding:** The RFID reader does NOT collect SO/RE data during scans. SO/RE are populated during export, not during device scan.
 
 **Possible explanations:**
 1. SO/RE are populated by the 3M Conversion Station (not Data Manager export)
