@@ -16,18 +16,14 @@ The native tool matches the original compiler outputs **100% byte-for-byte ident
 ## 1. Repository Directory Structure
 
 *   **[`dla_tool.py`](dla_tool.py)**: The core native compiler. Supports converting text lists to PalmDB catalogs, and parsing scanned uploads back to CSV.
-*   **[`build_all_floors.sh`](build_all_floors.sh)**: Automation script that queries a Koha ILS database via SSH, downloads shelf lists for all floors (A-F), and natively compiles them.
-*   **[`execute_export_a.sh`](execute_export_a.sh)**: Isolated automation script to clear, load, and compile Floor A databases under Wine for comparative analysis.
+*   **[`build_all_floors.sh`](build_all_floors.sh)**: Master automation script that queries a Koha ILS database via SSH, downloads shelf lists for all floors (A-F), and natively compiles them.
 *   **[`execute_export_final.sh`](execute_export_final.sh)**: Main automation script executing the full GUI export flow under Wine to generate final catalog databases.
-*   **[`execute_import_wine.sh`](execute_import_wine.sh)**: Script executing the import/scan processing flow under Wine to verify legacy parsing output.
-*   **[`check_pull_wine.sh`](check_pull_wine.sh)**: Verification helper to launch the legacy client, check directory detection, and confirm the loaded status of Pull Lists.
-*   **[`execute_export_pull.sh`](execute_export_pull.sh)**: Verification helper to execute compilation of pull lists under Wine.
-*   **[`check_large_pull_wine.sh`](check_large_pull_wine.sh)**: Automated holds compiler to query, select, and compile large-scale Koha pull lists under Wine.
-*   **[`compare_a.py`](compare_a.py)**: Verification utility to binary-compare PalmDB output segments.
+*   **[`parity_verification_report.md`](parity_verification_report.md)**: Detailed byte-level parity results, MD5 checksum comparisons, and automated Wine-based regression testing.
 *   **[`docs/`](docs/)**: Operational documentation for deploying and configuring the original legacy 3M client on a clean Windows/Wine machine.
     *   **[`docs/README.md`](docs/README.md)**: Operations & Setup Guide.
     *   **[`docs/images/`](docs/images/)**: Capture logs of the original user interface.
-*   **[`wine_scripts/`](wine_scripts/)**: Auxiliary Windows Script Host (`ActiveXObject` / ADODB) scripts used to inspect and manipulate the Access database schema during reverse engineering.
+*   **[`wine_scripts/`](wine_scripts/)**: Auxiliary scripts for reverse engineering, verification, and Wine-based automation.
+    *   **[`wine_scripts/README.md`](wine_scripts/README.md)**: Detailed documentation of all Wine and verification scripts.
 
 ---
 
