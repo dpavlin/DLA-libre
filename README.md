@@ -105,6 +105,26 @@ The RFID reader collects data during inventory scans. The upload files (`upload/
 
 The library's `cmd_import` function successfully parses these files from historic inventura data (2018), extracting all scanned barcodes with timestamps.
 
+### Device Timestamp Analysis
+
+**The device DOES collect timestamps** during inventory scans, but they are unreliable because the device clock was never set correctly.
+
+**Evidence from 2018 historic data:**
+- Parsed 100+ upload files using `cmd_import`
+- Timestamps cluster around `2398377xxx` (PalmOS epoch = January 1, 1904)
+- This converts to "January 1, 1980" - NOT the actual 2018 scan date
+- Device clock was initialized with a default timestamp and never updated
+
+**Timestamp characteristics:**
+- Sequence numbers ARE sequential and reliable for ordering
+- Timestamps change during scans (showing clock IS running)
+- Timestamp diffs: ~30% increasing, ~48% decreasing, ~21% same
+- Some records have zero timestamps (device couldn't read tag or timeout)
+
+**Device documentation:**
+- DLA has a "Set Clock" function in Options menu (DLA User Guide)
+- Handheld User Guide confirms: "you may have to initialize the screen and reset the time, and date parameters"
+
 ### SO and RE Fields
 
 **Current status:** All analyzed pull list PDB files show `SO=0x00000000` and `RE=0x00000000` for every record.
